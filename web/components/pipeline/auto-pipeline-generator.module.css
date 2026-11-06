@@ -1,0 +1,16 @@
+.generator { padding: 12px; border-bottom: 1px solid #313244; color: #bac2de; font-size: 11px; }
+.generator summary { cursor: pointer; font-weight: 600; }
+.generator p, .generator small { color: #9399b2; font-size: 10px; line-height: 1.6; }
+.generator fieldset { display: grid; gap: 9px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.generator label { display: grid; gap: 4px; }
+.generator textarea, .generator select { width: 100%; min-width: 0; padding: 7px; border: 1px solid #45475a; border-radius: 5px; background: #11111b; color: #cdd6f4; font: inherit; resize: vertical; }
+.workers { display: grid; gap: 5px; }
+.workers > span { color: #a6adc8; }
+.generator .workers label { display: flex; align-items: center; gap: 7px; }
+.workers input { margin: 0; accent-color: #b4befe; }
+.generator .speed { display: grid; grid-template-columns: 1fr auto; align-items: center; }
+.speed span { color: #b4befe; }
+.speed input { grid-column: 1 / -1; width: 100%; accent-color: #b4befe; }
+.generator button { justify-self: start; padding: 6px 9px; border: 1px solid #45475a; border-radius: 5px; background: transparent; color: #b4befe; font-size: 10px; }
+.generator button:disabled { opacity: .45; cursor: not-allowed; }
+.generator p[role="alert"] { color: #f38ba8; overflow-wrap: anywhere; }

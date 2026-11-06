@@ -1,0 +1,14 @@
+.panel { flex: none; max-height: 230px; overflow: auto; padding: 10px 22px; border-top: 1px solid #313244; color: #bac2de; background: #181825; font-size: 11px; }
+.panel summary { cursor: pointer; }
+.panel summary strong, .panel summary span { display: inline-block; margin: 3px 16px 3px 0; }
+.panel p { color: #9399b2; font-size: 10px; }
+.exportButton { padding: 5px 9px; border: 1px solid #45475a; border-radius: 5px; background: transparent; color: #bac2de; }
+.tableScroll { overflow-x: auto; }
+.panel table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+.panel caption { text-align: left; padding: 6px 0; font-weight: 600; }
+.panel th, .panel td { padding: 6px 10px; border-bottom: 1px solid #313244; text-align: left; }
+.panel tbody th { max-width: 230px; overflow: hidden; text-overflow: ellipsis; }
+.goals { display: grid; gap: 7px; margin: 0; padding: 12px; border: 0; border-bottom: 1px solid #313244; color: #bac2de; font-size: 11px; }
+.goals label { display: grid; gap: 4px; }
+.goals small { color: #9399b2; font-size: 10px; }
+@media (max-width: 600px) { .panel { padding: 8px 12px; max-height: 180px; } }

@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Pipeline Builder — Scratch Style</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a2e;color:#e0e0e0;font-family:'SF Mono','Fira Code',monospace;font-size:13px;overflow:hidden;height:100vh}
+.app{display:flex;flex-direction:column;height:100vh}
+
+/* TOP BAR */
+.topbar{height:50px;background:#16213e;border-bottom:2px solid #0f3460;display:flex;align-items:center;padding:0 12px;gap:6px;flex-shrink:0}
+.topbar-logo{font-size:18px;font-weight:800;letter-spacing:0.02em;color:#e94560}
+.topbar-logo span{color:#0f3460}
+.topbar-sep{width:2px;height:26px;background:rgba(255,255,255,0.15);margin:0 6px}
+.topbar-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:5px;padding:5px 12px;color:#ccc;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s;white-space:nowrap}
+.topbar-btn:hover{border-color:rgba(233,69,96,0.5);color:#fff}
+.topbar-btn.green{border-color:rgba(52,211,153,0.4);color:#34d399;background:rgba(52,211,153,0.1)}
+.topbar-btn.green:hover{background:rgba(52,211,153,0.2)}
+.topbar-btn.red{border-color:rgba(248,113,113,0.4);color:#f87171;background:rgba(248,113,113,0.1)}
+.topbar-btn.red:hover{background:rgba(248,113,113,0.2)}
+.topbar-spacer{flex:1}
+.topbar-label{font-size:9px;color:rgba(255,255,255,0.3)}
+.topbar-select{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:3px 6px;color:#ccc;font-size:10px;outline:none}
+.flag-btn{width:28px;height:28px;border-radius:50%;background:#4CAF50;border:2px solid #388E3C;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;box-shadow:0 2px 6px rgba(76,175,80,0.3)}
+.flag-btn:hover{background:#66BB6A;transform:scale(1.05)}
+.flag-btn:active{transform:scale(0.95)}
+
+/* CATEGORY TABS */
+.category-bar{height:36px;background:#0f1629;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;padding:0 10px;gap:2px;flex-shrink:0;overflow-x:auto}
+.cat-tab{padding:5px 12px;font-size:10px;font-weight:600;color:rgba(255,255,255,0.4);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;text-transform:uppercase;letter-spacing:0.06em}
+.cat-tab:hover{color:rgba(255,255,255,0.7)}
+.cat-tab.active{color:#fff;border-bottom-color:#e94560}
+.cat-tab .cat-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle}
+
+/* MAIN */
+.main-area{flex:1;display:flex;overflow:hidden}
+
+/* LEFT PANEL */
+.left-panel{width:210px;background:#0f1629;border-right:2px solid #1a1a2e;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.panel-header{padding:8px 12px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);border-bottom:1px solid rgba(255,255,255,0.06)}
+.blocks-list{flex:1;overflow-y:auto;padding:5px}
+.blocks-list-section{margin-bottom:6px}
+.blocks-list-section h4{font-size:8px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:0.08em;padding:3px 6px 1px;margin-bottom:2px}
+.sb-block{background:#16213e;border:1px solid rgba(255,255,255,0.08);border-radius:5px;margin-bottom:3px;cursor:grab;transition:all .12s;user-select:none;position:relative}
+.sb-block:hover{border-color:rgba(233,69,96,0.4);background:#1a2340}
+.sb-block:active{cursor:grabbing}
+.sb-block .sb-header{padding:5px 8px;font-size:10px;font-weight:600;display:flex;align-items:center;gap:4px;border-radius:4px 4px 0 0}
+.sb-block .sb-body{padding:2px 8px 5px;font-size:9px;color:rgba(0,0,0,0.4)}
+.sb-block .sb-body .meta{display:flex;gap:4px;flex-wrap:wrap}
+.sb-block .sb-body .meta span{background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:2px;font-size:7px}
+.sb-block .sb-drag{position:absolute;top:2px;left:2px;font-size:7px;color:rgba(255,255,255,0.12)}
+
+/* CATEGORY COLORS */
+.cat-models .sb-block .sb-header{background:rgba(233,69,96,0.15);color:#e94560}
+.cat-if .sb-block .sb-header{background:rgba(255,204,51,0.15);color:#ffcc33}
+.cat-control .sb-block .sb-header{background:rgba(140,82,255,0.15);color:#8c52ff}
+.cat-tool .sb-block .sb-header{background:rgba(92,191,255,0.15);color:#5cbfff}
+.cat-event .sb-block .sb-header{background:rgba(52,211,153,0.15);color:#34d399}
+
+/* WORKSPACE */
+.workspace{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.scripts-area{flex:1;overflow:auto;position:relative;background:#f8f8f8;background-image:linear-gradient(rgba(0,0,0,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.06) 1px,transparent 1px);background-size:20px 20px}
+.scripts-area-inner{position:relative;width:8000px;height:8000px;min-width:100%;min-height:100%}
+.script-block{position:absolute;cursor:grab;user-select:none;z-index:2;min-width:190px;transition:filter .12s}
+.script-block:hover{filter:brightness(0.96)}
+.script-block.selected{filter:drop-shadow(0 0 10px rgba(233,69,96,0.6));z-index:10}
+.script-block.running{filter:drop-shadow(0 0 14px rgba(76,175,80,0.7));animation:pulse-glow 0.8s infinite}
+@keyframes pulse-glow{0%,100%{filter:drop-shadow(0 0 8px rgba(76,175,80,0.7))}50%{filter:drop-shadow(0 0 18px rgba(76,175,80,0.9))}}
+.script-block.dragging{opacity:0.4;filter:grayscale(0.5)}
+.script-block .sb-header{padding:6px 10px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:5px;border-radius:5px 5px 0 0}
+.script-block .sb-body{padding:3px 10px 6px;font-size:10px;color:rgba(0,0,0,0.5)}
+.script-block .sb-body .model{color:#333;font-weight:600;font-size:11px}
+.script-block .sb-body .desc{color:#666;font-size:9px;margin-top:2px;line-height:1.3}
+.script-block .sb-body .meta{display:flex;gap:3px;margin-top:2px;flex-wrap:wrap}
+.script-block .sb-body .meta span{background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:2px;font-size:7px}
+.script-block .sb-delete{position:absolute;top:1px;right:3px;font-size:8px;color:rgba(255,0,0,0.35);cursor:pointer;display:none;z-index:10}
+.script-block:hover .sb-delete{display:block}
+.script-block .sb-port{width:11px;height:11px;border-radius:50%;border:2.5px solid rgba(255,255,255,0.4);background:#fff;position:absolute;cursor:crosshair;transition:all .12s;z-index:5;box-shadow:0 1px 3px rgba(0,0,0,0.2)}
+.script-block .sb-port:hover{background:#e94560;border-color:#e94560;transform:scale(1.4)}
+.script-block .sb-port.left{left:-6px;top:50%;margin-top:-6px}
+.script-block .sb-port.right{right:-6px;top:50%;margin-top:-6px}
+.script-block .sb-port.input{border-color:#5cbfff;background:rgba(92,191,255,0.1)}
+.script-block .sb-port.output{border-color:#34d399;background:rgba(52,211,153,0.1)}
+.script-block .sb-parallel{position:absolute;top:-5px;right:5px;font-size:7px;padding:1px 3px;border-radius:3px;font-weight:700;background:#e94560;color:#fff}
+.script-block .sb-if-tag{position:absolute;top:-5px;left:5px;font-size:7px;padding:1px 3px;border-radius:3px;font-weight:700;background:#ffcc33;color:#333}
+
+.connections-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1}
+
+.scripts-area.drag-over { background-color: #e8f5e9; border: 3px dashed #4CAF50; }
+.script-block[draggable="true"] { cursor: grab; }
+.script-block[draggable="true"]:active { cursor: grabbing; }
+
+/* STAGE */
+.stage-bar{height:52px;background:#0f1629;border-top:2px solid #1a1a2e;display:flex;align-items:center;padding:0 12px;gap:10px;flex-shrink:0}
+.stage-label{font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.1em;white-space:nowrap}
+.stage-box{flex:1;background:#fff;border-radius:6px;padding:8px 14px;font-size:12px;color:#333;display:flex;align-items:center;gap:6px;min-height:32px}
+.stage-box .output-dot{width:8px;height:8px;border-radius:50%;background:#4CAF50;flex-shrink:0}
+.stage-box .output-text{color:#333;font-size:12px}
+.stage-box .output-time{color:rgba(0,0,0,0.3);font-size:9px;margin-left:auto}
+
+/* STATUS BAR */
+.statusbar{height:22px;background:#0f1629;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;padding:0 12px;gap:14px;font-size:9px;color:rgba(255,255,255,0.3);flex-shrink:0}
+.status-dot{width:5px;height:5px;border-radius:50%;display:inline-block;margin-right:3px}
+.status-dot.green{background:#4CAF50}
+.status-dot.yellow{background:#ffcc33;animation:pulse 1s infinite}
+.status-dot.red{background:#f44336}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* CONNECTING LINE (during drag) */
+.connect-line{position:absolute;pointer-events:none;z-index:100;stroke:#e94560;stroke-width:2.5;stroke-dasharray:6,4}
+
+/* CONFIG PANEL */
+.config-panel{width:260px;background:#0f1629;border-left:2px solid #1a1a2e;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.config-panel.hidden{display:none}
+.config-header{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.config-header h3{font-size:12px;font-weight:600;color:#e94560}
+.config-header p{font-size:9px;color:rgba(255,255,255,0.3);margin-top:1px}
+.config-body{padding:12px;display:flex;flex-direction:column;gap:8px}
+.config-field{display:flex;flex-direction:column;gap:2px}
+.config-field label{font-size:8px;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3)}
+.config-field input,.config-field select,.config-field textarea{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:5px;padding:5px 8px;color:#fff;font-size:10px;outline:none;font-family:inherit}
+.config-field input:focus,.config-field select:focus,.config-field textarea:focus{border-color:#e94560}
+.config-field textarea{resize:vertical;min-height:50px}
+.config-actions{padding:12px;border-top:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;gap:5px}
+.config-btn{padding:6px 10px;border-radius:5px;border:1px solid;cursor:pointer;font-size:11px;text-align:center;transition:all .15s}
+.config-btn:hover{opacity:0.85}
+.config-btn.gray{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5)}
+.config-btn.green{background:rgba(52,211,153,0.15);border-color:rgba(52,211,153,0.3);color:#34d399}
+
+/* SAVE MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:100}
+.modal-overlay.show{display:flex}
+.modal{background:#16213e;border:2px solid #0f3460;border-radius:14px;padding:20px;width:360px;max-width:90vw}
+.modal h3{font-size:15px;margin-bottom:12px;color:#e94560}
+.modal input{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:8px 12px;color:#fff;font-size:12px;outline:none;margin-bottom:12px}
+.modal input:focus{border-color:#e94560}
+.modal-btns{display:flex;gap:6px;justify-content:flex-end}
+.modal-btn{padding:6px 12px;border-radius:5px;border:1px solid;cursor:pointer;font-size:11px;transition:all .15s}
+.modal-btn.gray{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5)}
+.modal-btn.green{background:rgba(52,211,153,0.15);border-color:rgba(52,211,153,0.3);color:#34d399}
+
+/* PROVIDERS */
+.providers-mini{padding:6px;border-top:1px solid rgba(255,255,255,0.06);max-height:120px;overflow-y:auto}
+.providers-mini h4{font-size:8px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px}
+.provider-mini-item{display:flex;align-items:center;gap:5px;padding:2px 0;font-size:9px}
+.provider-mini-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.provider-mini-name{flex:1;color:rgba(255,255,255,0.5)}
+.provider-mini-key{width:55px;height:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:2px;font-size:7px;color:rgba(255,255,255,0.3);outline:none}
+.provider-mini-key:focus{border-color:#e94560}
+
+/* LEGEND */
+.legend{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,0.7);border-radius:4px;padding:4px 8px;font-size:8px;color:rgba(255,255,255,0.4);z-index:10;display:flex;gap:8px}
+.legend-item{display:flex;align-items:center;gap:3px}
+.legend-swatch{width:8px;height:8px;border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-logo">AI<span>Blocks</span></div>
+    <div class="topbar-sep"></div>
+    <div class="flag-btn" onclick="runPipeline()">▶</div>
+    <button class="topbar-btn red" onclick="cancelPipeline()">⏹</button>
+    <div class="topbar-sep"></div>
+    <span class="topbar-label">Workspace</span>
+    <select class="topbar-select" id="workspaceSelect">
+      <option>🧠 Complex Coding</option>
+      <option>⚡ Simple Coding</option>
+      <option>📁 Daily</option>
+      <option>📋 Planning</option>
+      <option>🔢 Math</option>
+    </select>
+    <div class="topbar-spacer"></div>
+    <button class="topbar-btn green" onclick="openSaveModal()">💾 Save</button>
+    <button class="topbar-btn" onclick="loadSavedMode()">📂 Load</button>
+    <button class="topbar-btn" onclick="clearCanvas()">🗑 Clear</button>
+    <span class="topbar-label" id="blockCount">0 blocks</span>
+  </div>
+
+  <!-- CATEGORY TABS -->
+  <div class="category-bar">
+    <div class="cat-tab active" data-cat="models"><span class="cat-dot" style="background:#e94560"></span>Models</div>
+    <div class="cat-tab" data-cat="if"><span class="cat-dot" style="background:#ffcc33"></span>If</div>
+    <div class="cat-tab" data-cat="control"><span class="cat-dot" style="background:#8c52ff"></span>Control</div>
+    <div class="cat-tab" data-cat="tool"><span class="cat-dot" style="background:#5cbfff"></span>Tools</div>
+    <div class="cat-tab" data-cat="event"><span class="cat-dot" style="background:#34d399"></span>Events</div>
+    <div style="flex:1"></div>
+    <span class="topbar-label">Parallel: <span id="parallelLabel" style="color:rgba(255,255,255,0.3)">OFF</span></span>
+    <button class="topbar-btn" style="padding:3px 8px;font-size:9px" onclick="toggleParallel()" id="parallelBtn">⏱</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-area">
+    <div class="left-panel">
+      <div class="panel-header">🧩 Blocks</div>
+      <div class="blocks-list" id="blocksList">
+        <div class="blocks-list-section">
+          <h4>🧠 Models</h4>
+          <div class="sb-block cat-models" data-type="implement" data-cat="models">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">💻 Qwen3.8 27B <span style="font-size:7px;opacity:0.5">FREE</span></div>
+            <div class="sb-body"><div class="meta"><span>64K</span><span>1 pass</span></div></div>
+          </div>
+          <div class="sb-block cat-models" data-type="review" data-cat="models">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">🔍 Qwen 3.7 Flash <span style="font-size:7px;opacity:0.5">QWEN</span></div>
+            <div class="sb-body"><div class="meta"><span>32K</span><span>1 pass</span></div></div>
+          </div>
+          <div class="sb-block cat-models" data-type="fix" data-cat="models">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">🛠 GLM 5.3 Flash <span style="font-size:7px;opacity:0.5">GLM</span></div>
+            <div class="sb-body"><div class="meta"><span>100K</span><span>1 pass</span></div></div>
+          </div>
+          <div class="sb-block cat-models" data-type="verify" data-cat="models">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">🔒 DeepSeek V4 Pro <span style="font-size:7px;opacity:0.5">V4PRO</span></div>
+            <div class="sb-body"><div class="meta"><span>120K</span><span>1 pass</span></div></div>
+          </div>
+          <div class="sb-block cat-models" data-type="output" data-cat="models">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">👑 Kimi K3 <span style="font-size:7px;opacity:0.5">K3</span></div>
+            <div class="sb-body"><div class="meta"><span>160K</span><span>1 pass</span></div></div>
+          </div>
+        </div>
+        <div class="blocks-list-section">
+          <h4>❓ If</h4>
+          <div class="sb-block cat-if" data-type="verify" data-cat="if">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">❓ if confidence ≥ 85%</div>
+            <div class="sb-body"><div class="meta"><span>boolean</span><span>branch</span></div></div>
+          </div>
+          <div class="sb-block cat-if" data-type="search" data-cat="if">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">❓ if findings exist</div>
+            <div class="sb-body"><div class="meta"><span>boolean</span><span>branch</span></div></div>
+          </div>
+          <div class="sb-block cat-if" data-type="notion" data-cat="if">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">❓ if low confidence</div>
+            <div class="sb-body"><div class="meta"><span>boolean</span><span>escalate</span></div></div>
+          </div>
+          <div class="sb-block cat-if" data-type="implement" data-cat="if">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">❓ if max passes reached</div>
+            <div class="sb-body"><div class="meta"><span>boolean</span><span>limit</span></div></div>
+          </div>
+          <div class="sb-block cat-if" data-type="action" data-cat="if">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">❓ if mandatory review</div>
+            <div class="sb-body"><div class="meta"><span>boolean</span><span>gate</span></div></div>
+          </div>
+        </div>
+        <div class="blocks-list-section">
+          <h4>🔀 Control</h4>
+          <div class="sb-block cat-control" data-type="output" data-cat="control">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">🔁 Loop: Repeat Review</div>
+            <div class="sb-body"><div class="meta"><span>loop</span></div></div>
+          </div>
+          <div class="sb-block cat-control" data-type="search" data-cat="control">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">⬆️ Escalate Tier</div>
+            <div class="sb-body"><div class="meta"><span>tier</span></div></div>
+          </div>
+          <div class="sb-block cat-control" data-type="implement" data-cat="control">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">⏱ Parallel Group</div>
+            <div class="sb-body"><div class="meta"><span>parallel</span></div></div>
+          </div>
+        </div>
+        <div class="blocks-list-section">
+          <h4>🔧 Tools</h4>
+          <div class="sb-block cat-tool" data-type="search" data-cat="tool">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">🔎 Brave Search</div>
+            <div class="sb-body"><div class="meta"><span>api</span><span>web</span></div></div>
+          </div>
+          <div class="sb-block cat-tool" data-type="notion" data-cat="tool">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">📄 Notion MCP</div>
+            <div class="sb-body"><div class="meta"><span>mcp</span><span>db</span></div></div>
+          </div>
+          <div class="sb-block cat-tool" data-type="action" data-cat="tool">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">📝 Write to Repo</div>
+            <div class="sb-body"><div class="meta"><span>git</span><span>files</span></div></div>
+          </div>
+        </div>
+        <div class="blocks-list-section">
+          <h4>📡 Events</h4>
+          <div class="sb-block cat-event" data-type="start" data-cat="event">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">🟢 When Green Flag</div>
+            <div class="sb-body"><div class="meta"><span>trigger</span></div></div>
+          </div>
+          <div class="sb-block cat-event" data-type="end" data-cat="event">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">🏁 End Pipeline</div>
+            <div class="sb-body"><div class="meta"><span>terminus</span></div></div>
+          </div>
+          <div class="sb-block cat-event" data-type="implement" data-cat="event">
+            <div class="sb-drag">⋮⋮</div>
+            <div class="sb-header">⏹ When Stopped</div>
+            <div class="sb-body"><div class="meta"><span>cancel</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="providers-mini">
+        <h4>🔑 Providers</h4>
+        <div class="provider-mini-item"><div class="provider-mini-dot" style="background:#e94560"></div><span class="provider-mini-name">OpenRouter</span><input class="provider-mini-key" placeholder="sk-or-v1-..."></div>
+        <div class="provider-mini-item"><div class="provider-mini-dot" style="background:#ffcc33"></div><span class="provider-mini-name">DeepSeek</span><input class="provider-mini-key" placeholder="sk-ds-..."></div>
+        <div class="provider-mini-item"><div class="provider-mini-dot" style="background:#5cbfff"></div><span class="provider-mini-name">Together</span><input class="provider-mini-key" placeholder="tk-..."></div>
+        <div class="provider-mini-item"><div class="provider-mini-dot" style="background:#34d399"></div><span class="provider-mini-name">Google AI</span><input class="provider-mini-key" placeholder="AIza..."></div>
+        <div class="provider-mini-item"><div class="provider-mini-dot" style="background:#8c52ff"></div><span class="provider-mini-name">ZAI</span><input class="provider-mini-key" placeholder="zai-key-..."></div>
+        <div class="provider-mini-item"><div class="provider-mini-dot" style="background:#ffcc33"></div><span class="provider-mini-name">Ollama</span><input class="provider-mini-key" placeholder="localhost:11434"></div>
+      </div>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div class="workspace">
+      <div class="scripts-area" id="scriptsArea">
+        <div class="scripts-area-inner" id="scriptsAreaInner">
+          <svg class="connections-svg" id="connectionsSvg"></svg>
+          <div class="blocks-layer" id="blocksLayer"></div>
+        </div>
+      </div>
+      <div class="stage-bar">
+        <span class="stage-label">Stage</span>
+        <div class="stage-box" id="stageBox">
+          <div class="output-dot"></div>
+          <span class="output-text" id="stageText">Pipeline output will appear here...</span>
+          <span class="output-time" id="stageTime"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIG PANEL -->
+    <div class="config-panel hidden" id="configPanel">
+      <div class="config-header">
+        <h3 id="configTitle">Block Config</h3>
+        <p id="configSubtitle">Click a block to edit</p>
+      </div>
+      <div class="config-body">
+        <div class="config-field">
+          <label>Role</label>
+          <select id="cfgRole">
+            <option>FREE</option><option>QWEN</option><option>GLM</option><option>V4PRO</option><option>K3</option><option>START</option><option>END</option>
+          </select>
+        </div>
+        <div class="config-field">
+          <label>Model</label>
+          <input type="text" id="cfgModel" placeholder="qwen/qwen3.8-27b">
+        </div>
+        <div class="config-field">
+          <label>Provider</label>
+          <select id="cfgProvider">
+            <option>openrouter</option><option>together</option><option>deepseek</option><option>zai</option><option>qwencloud</option><option>ollama</option>
+          </select>
+        </div>
+        <div class="config-field">
+          <label>Context (tokens)</label>
+          <input type="number" id="cfgContext" value="64000">
+        </div>
+        <div class="config-field">
+          <label>Description</label>
+          <textarea id="cfgDesc" rows="3" placeholder="Describe what this block does..."></textarea>
+        </div>
+      </div>
+      <div class="config-actions">
+        <button class="config-btn green" onclick="saveBlockConfig()">✓ Save Block</button>
+        <button class="config-btn gray" onclick="deleteSelectedBlock()">✕ Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="statusbar">
+    <span><span class="status-dot green" id="statusDot"></span><span id="statusText">Ready</span></span>
+    <span id="statusInfo">Drag blocks from the left panel onto the canvas</span>
+    <div style="flex:1"></div>
+    <span id="statusMode">No mode loaded</span>
+  </div>
+</div>
+
+<!-- SAVE MODAL -->
+<div class="modal-overlay" id="saveModal">
+  <div class="modal">
+    <h3>💾 Save Mode</h3>
+    <input type="text" id="saveName" placeholder="e.g. 'Complex Coding v2'">
+    <div class="modal-btns">
+      <button class="modal-btn gray" onclick="closeSaveModal()">Cancel</button>
+      <button class="modal-btn green" onclick="saveMode()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend" id="legend">
+  <div class="legend-item"><div class="legend-swatch" style="background:#e94560"></div>Model</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#ffcc33"></div>If</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#8c52ff"></div>Control</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#5cbfff"></div>Tool</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#34d399"></div>Event</div>
+</div>
+
+<script>
+let blocks = [];
+let connections = [];
+let selectedBlock = null;
+let blockIdCounter = 0;
+let parallelMode = false;
+let running = false;
+let savedModes = JSON.parse(localStorage.getItem('pipeline_modes') || '[]');
+let isDraggingCanvasBlock = false;
+let dragOffset = {x:0, y:0};
+let connectionFrom = null;
+let connectionSide = null;
+
+function setupCategoryTabs() {
+  document.querySelectorAll('.cat-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+}
+
+function createBlock(type, x, y) {
+  const id = ++blockIdCounter;
+  const bt = BLOCK_TYPES[type] || BLOCK_TYPES.implement;
+  const block = { id, type, x: Math.round(x), y: Math.round(y), model: bt.model, provider:'openrouter', apiKey:'', context:bt.context, maxPasses:bt.maxPasses, parallelGroup:'', tools:[], prompt:'', role:bt.role, desc:bt.desc, status:null };
+  blocks.push(block);
+  updateBlockCount();
+  return block;
+}
+
+function getPorts(type) {
+  const input = ['start','end','output'].includes(type);
+  return input ? [{side:'right',type:'output'}] : [{side:'right',type:'output'},{side:'left',type:'input'}];
+}
+
+function getShape(type) { return ['start','end'].includes(type) ? 'hat' : 'stack'; }
+function getCatForType(type) {
+  const m = {start:'event',implement:'models',review:'models',fix:'models',verify:'models',search:'tool',notion:'tool',action:'tool',output:'models',end:'event'};
+  return m[type] || 'models';
+}
+
+// --- NATIVE HTML5 DRAG & DROP ---
+function setupNativeDragDrop() {
+  // Make palette blocks draggable
+  document.querySelectorAll('.sb-block[data-type]').forEach(el => {
+    el.setAttribute('draggable', 'true');
+    el.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', el.dataset.type);
+      e.dataTransfer.effectAllowed = 'copy';
+      el.style.opacity = '0.4';
+    });
+    el.addEventListener('dragend', (e) => {
+      e.target.style.opacity = '1';
+    });
+  });
+
+  const area = document.getElementById('scriptsArea');
+
+  area.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    area.classList.add('drag-over');
+  });
+
+  area.addEventListener('dragleave', () => {
+    area.classList.remove('drag-over');
+  });
+
+  area.addEventListener('drop', (e) => {
+    e.preventDefault();
+    area.classList.remove('drag-over');
+    const type = e.dataTransfer.getData('text/plain');
+    if (!type) return;
+    const rect = area.getBoundingClientRect();
+    const scrollLeft = area.scrollLeft;
+    const scrollTop = area.scrollTop;
+    const x = Math.round((e.clientX - rect.left + scrollLeft) / 20) * 20;
+    const y = Math.round((e.clientY - rect.top + scrollTop) / 20) * 20;
+    const block = createBlock(type, x - 95, y - 30);
+    selectBlock(block.id);
+  });
+}
+
+// --- CANVAS BLOCK MOVING ---
+function setupCanvasMove() {
+  const area = document.getElementById('scriptsArea');
+
+  area.addEventListener('mousedown', (e) => {
+    const blockEl = e.target.closest('.script-block');
+    if (!blockEl) { deselectAll(); return; }
+    if (e.target.classList.contains('sb-port') || e.target.classList.contains('sb-delete')) return;
+
+    const id = parseInt(blockEl.dataset.id);
+    const b = blocks.find(x => x.id === id);
+    if (!b) return;
+
+    selectBlock(id);
+    isDraggingCanvasBlock = true;
+    const rect = area.getBoundingClientRect();
+    dragOffset = {
+      x: e.clientX - rect.left - area.scrollLeft - b.x,
+      y: e.clientY - rect.top - area.scrollTop - b.y
+    };
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDraggingCanvasBlock || selectedBlock === null) return;
+    const area = document.getElementById('scriptsArea');
+    const rect = area.getBoundingClientRect();
+    const b = blocks.find(x => x.id === selectedBlock);
+    if (!b) return;
+    b.x = Math.max(0, e.clientX - rect.left - area.scrollLeft - dragOffset.x);
+    b.y = Math.max(0, e.clientY - rect.top - area.scrollTop - dragOffset.y);
+    b.x = Math.round(b.x / 20) * 20;
+    b.y = Math.round(b.y / 20) * 20;
+    render();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isDraggingCanvasBlock) {
+      isDraggingCanvasBlock = false;
+      renderConnections();
+    }
+  });
+}
+
+// --- INIT ---
+document.addEventListener('DOMContentLoaded', () => {
+  const b1 = createBlock('start', 60, 100);
+  const b2 = createBlock('implement', 60, 250);
+  const b3 = createBlock('review', 60, 400);
+  const b4 = createBlock('fix', 60, 550);
+  const b5 = createBlock('verify', 60, 700);
+  const b6 = createBlock('output', 60, 850);
+  const b7 = createBlock('end', 60, 980);
+
+  connections.push({from:b1.id,to:b2.id});
+  connections.push({from:b2.id,to:b3.id});
+  connections.push({from:b3.id,to:b4.id});
+  connections.push({from:b4.id,to:b5.id});
+  connections.push({from:b5.id,to:b6.id});
+  connections.push({from:b6.id,to:b7.id});
+
+  setupNativeDragDrop();
+  setupCanvasMove();
+  setupCategoryTabs();
+  render();
+});
+
+function render() {
+  const layer = document.getElementById('blocksLayer');
+  layer.innerHTML = '';
+
+  blocks.forEach(b => {
+    const bt = BLOCK_TYPES[b.type] || BLOCK_TYPES.implement;
+    const el = document.createElement('div');
+    const statusClass = b.status ? ` ${b.status}` : '';
+    const isIf = ['verify','search','notion'].includes(b.type) && b.role !== 'QWEN';
+    const cat = getCatForType(b.type);
+    el.className = `script-block cat-${cat} type-${b.type}${selectedBlock===b.id?' selected':''}${statusClass}`;
+    el.style.left = b.x + 'px';
+    el.style.top = b.y + 'px';
+    el.dataset.id = b.id;
+
+    const portsHtml = getPorts(b.type).map(p => {
+      const cls = p.type === 'input' ? 'input' : 'output';
+      return `<div class="sb-port ${cls}" data-block="${b.id}" data-side="${p.side}" title="${p.side} port"></div>`;
+    }).join('');
+    const parallelBadge = b.parallelGroup ? `<div class="sb-parallel">⏱ ${b.parallelGroup}</div>` : '';
+    const ifTag = isIf ? `<div class="sb-if-tag">❓</div>` : '';
+
+    el.innerHTML = `
+      <div class="sb-delete" onclick="event.stopPropagation();deleteBlock(${b.id})">✕</div>
+      ${parallelBadge}${ifTag}
+      <div class="sb-header">${bt.icon} ${bt.label}</div>
+      <div class="sb-body">
+        <div class="model">${b.model || '—'}</div>
+        <div class="desc">${b.desc || 'Click to add a description'}</div>
+        <div class="meta">
+          <span>${b.provider}</span>
+          <span>${b.context>0?(b.context/1000)+'K':'—'}</span>
+          <span>${b.role}</span>
+        </div>
+      </div>
+      ${portsHtml}
+    `;
+
+    el.addEventListener('mousedown', (e) => {
+      if (e.target.classList.contains('sb-delete') || e.target.classList.contains('sb-port')) return;
+      e.stopPropagation();
+      selectBlock(b.id);
+    });
+
+    el.querySelectorAll('.sb-port').forEach(port => {
+      port.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const bid = parseInt(port.dataset.block);
+        const side = port.dataset.side;
+        startConnection(bid, side);
+      });
+    });
+
+    layer.appendChild(el);
+  });
+  renderConnections();
+}
+
+function renderConnections() {
+  const svg = document.getElementById('connectionsSvg');
+  const area = document.getElementById('scriptsArea');
+  svg.setAttribute('width', Math.max(area.scrollWidth, 8000));
+  svg.setAttribute('height', Math.max(area.scrollHeight, 8000));
+  svg.innerHTML = '';
+
+  connections.forEach((conn) => {
+    const from = blocks.find(b => b.id === conn.from);
+    const to = blocks.find(b => b.id === conn.to);
+    if (!from || !to) return;
+    const x1 = from.x + 195, y1 = from.y + 30;
+    const x2 = to.x, y2 = to.y + 30;
+    const midX = (x1 + x2) / 2;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', `M${x1},${y1} C${midX},${y1} ${midX},${y2} ${x2},${y2}`);
+    path.setAttribute('stroke', conn.parallel ? '#e94560' : '#1a1a2e');
+    path.setAttribute('stroke-width', conn.parallel ? '3' : '2');
+    path.setAttribute('fill','none');
+    path.style.pointerEvents = 'stroke';
+    path.style.cursor = 'pointer';
+    path.addEventListener('click', () => {
+      if (confirm('Delete connection?')) {
+        connections = connections.filter(c => c !== conn);
+        renderConnections();
+      }
+    });
+    svg.appendChild(path);
+
+    const arrow = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    arrow.setAttribute('points', `${x2},${y2} ${x2-6},${y2-4} ${x2-6},${y2+4}`);
+    arrow.setAttribute('fill', conn.parallel ? '#e94560' : '#1a1a2e');
+    svg.appendChild(arrow);
+  });
+}
+
+function selectBlock(id) {
+  selectedBlock = id;
+  const b = blocks.find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('configPanel').classList.remove('hidden');
+  document.getElementById('configTitle').textContent = `${b.icon} ${b.label} #${b.id}`;
+  document.getElementById('configSubtitle').textContent = `${b.model} • ${b.provider}`;
+  document.getElementById('cfgRole').value = b.role;
+  document.getElementById('cfgModel').value = b.model || '';
+  document.getElementById('cfgProvider').value = b.provider;
+  document.getElementById('cfgContext').value = b.context || 64000;
+  document.getElementById('cfgDesc').value = b.desc || '';
+  render();
+}
+
+function deselectAll() {
+  selectedBlock = null;
+  document.getElementById('configPanel').classList.add('hidden');
+  render();
+}
+
+function saveBlockConfig() {
+  if (!selectedBlock) return;
+  const b = blocks.find(x => x.id === selectedBlock);
+  if (!b) return;
+  b.role = document.getElementById('cfgRole').value;
+  b.model = document.getElementById('cfgModel').value;
+  b.provider = document.getElementById('cfgProvider').value;
+  b.context = parseInt(document.getElementById('cfgContext').value) || 64000;
+  b.desc = document.getElementById('cfgDesc').value;
+  document.getElementById('configSubtitle').textContent = `${b.model} • ${b.provider}`;
+  render();
+}
+
+function deleteBlock(id) {
+  blocks = blocks.filter(b => b.id !== id);
+  connections = connections.filter(c => c.from !== id && c.to !== id);
+  if (selectedBlock === id) deselectAll();
+  updateBlockCount();
+  render();
+}
+
+function deleteSelectedBlock() { if (selectedBlock) deleteBlock(selectedBlock); }
+
+function startConnection(blockId, side) {
+  connectionFrom = blockId;
+  connectionSide = side;
+  document.getElementById('statusInfo').textContent = `Click another block's ${side === 'left' ? 'left (input)' : 'right (output)'} port to connect`;
+}
+
+// --- CONNECT PORTS ON CLICK ---
+document.addEventListener('click', (e) => {
+  if (!connectionFrom) return;
+  const port = e.target.closest('.sb-port');
+  if (!port) {
+    // Clicked elsewhere, cancel
+    if (e.target.closest('.script-block') || e.target.closest('.left-panel') || e.target.closest('.topbar') || e.target.closest('.category-bar') || e.target.closest('.statusbar')) return;
+    connectionFrom = null;
+    document.getElementById('statusInfo').textContent = 'Click blocks to connect them';
+    return;
+  }
+  const toId = parseInt(port.dataset.block);
+  const toSide = port.dataset.side;
+  if (toId === connectionFrom) { connectionFrom = null; return; }
+  if (toSide === connectionSide) { connectionFrom = null; return; }
+
+  // Determine from/to based on sides
+  let fromId, toIdFinal;
+  if (connectionSide === 'right' && toSide === 'left') {
+    fromId = connectionFrom; toIdFinal = toId;
+  } else if (connectionSide === 'left' && toSide === 'right') {
+    fromId = toId; toIdFinal = connectionFrom;
+  } else { connectionFrom = null; return; }
+
+  // Check duplicate
+  const exists = connections.some(c => (c.from === fromId && c.to === toIdFinal));
+  if (!exists) {
+    connections.push({from: fromId, to: toIdFinal});
+  }
+  connectionFrom = null;
+  document.getElementById('statusInfo').textContent = 'Connected!';
+  render();
+});
+
+function toggleParallel() {
+  parallelMode = !parallelMode;
+  document.getElementById('parallelLabel').textContent = parallelMode ? 'ON' : 'OFF';
+  document.getElementById('parallelLabel').style.color = parallelMode ? '#e94560' : 'rgba(255,255,255,0.3)';
+}
+
+function runPipeline() {
+  if (!blocks.length) { document.getElementById('statusInfo').textContent = 'Add blocks first!'; return; }
+  running = true;
+  document.getElementById('statusInfo').textContent = 'Running...';
+  document.getElementById('statusDot').className = 'status-dot yellow';
+  document.getElementById('stageText').textContent = 'Pipeline running...';
+  const sorted = [...blocks].sort((a,b) => a.y - b.y || a.x - b.x);
+  let idx = 0;
+  function runNext() {
+    if (idx >= sorted.length) {
+      running = false;
+      document.getElementById('statusInfo').textContent = 'Pipeline complete!';
+      document.getElementById('statusDot').className = 'status-dot green';
+      document.getElementById('stageText').textContent = '✅ Pipeline complete!';
+      document.getElementById('stageTime').textContent = new Date().toLocaleTimeString();
+      return;
+    }
+    const b = sorted[idx];
+    const el = document.querySelector(`[data-id="${b.id}"]`);
+    if (el) { el.classList.add('running'); b.status = 'running'; }
+    setTimeout(() => {
+      if (el) { el.classList.remove('running'); el.classList.add('done'); b.status = 'done'; }
+      idx++;
+      setTimeout(runNext, parallelMode ? 100 : 500);
+    }, parallelMode && b.parallelGroup ? 400 : 800);
+  }
+  runNext();
+}
+
+function cancelPipeline() {
+  running = false;
+  blocks.forEach(b => b.status = null);
+  document.querySelectorAll('.script-block').forEach(el => el.classList.remove('running','done'));
+  document.getElementById('statusInfo').textContent = 'Cancelled';
+  document.getElementById('statusDot').className = 'status-dot red';
+  document.getElementById('stageText').textContent = 'Pipeline cancelled.';
+}
+
+function openSaveModal() { document.getElementById('saveModal').classList.add('show'); document.getElementById('saveName').value = ''; document.getElementById('saveName').focus(); }
+function closeSaveModal() { document.getElementById('saveModal').classList.remove('show'); }
+function saveMode() {
+  const name = document.getElementById('saveName').value.trim();
+  if (!name) return;
+  savedModes.push({ name, blocks: JSON.parse(JSON.stringify(blocks)), connections: JSON.parse(JSON.stringify(connections)), parallel: parallelMode, timestamp: Date.now() });
+  localStorage.setItem('pipeline_modes', JSON.stringify(savedModes));
+  closeSaveModal();
+  document.getElementById('statusInfo').textContent = `Mode "${name}" saved!`;
+}
+function loadMode(idx) {
+  const mode = savedModes[idx]; if (!mode) return;
+  blocks = JSON.parse(JSON.stringify(mode.blocks));
+  connections = JSON.parse(JSON.stringify(mode.connections));
+  parallelMode = mode.parallel || false;
+  document.getElementById('parallelLabel').textContent = parallelMode ? 'ON' : 'OFF';
+  render();
+  document.getElementById('statusInfo').textContent = `Loaded "${mode.name}"`;
+}
+function loadSavedMode() { if (!savedModes.length) { document.getElementById('statusInfo').textContent = 'No saved modes!'; return; } loadMode(savedModes.length - 1); }
+function clearCanvas() { blocks = []; connections = []; selectedBlock = null; deselectAll(); updateBlockCount(); document.getElementById('statusInfo').textContent = 'Canvas cleared'; }
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Delete' && selectedBlock) deleteBlock(selectedBlock);
+  if (e.key === ' ' && !e.repeat) { e.preventDefault(); running ? cancelPipeline() : runPipeline(); }
+});
+</script>
+</body>
+</html>

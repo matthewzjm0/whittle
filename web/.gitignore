@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Local test artifacts
+test-results/
+playwright-report/
+blob-report/
+
+# Selftest build output (created by `npm run pipeline:test`)
+.pipeline-selftest/
+
+# Tool caches
+*.tsbuildinfo
+.eslintcache
+
+# Logs
+*.log
+
+# Environment files — .env.example is the only tracked env file
+.env
+.env.local
+.env.*.local
+
+# OS noise
+Thumbs.db
+.DS_Store
